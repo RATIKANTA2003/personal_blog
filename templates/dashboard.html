@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="navbar">
+    <h2>Admin Dashboard</h2>
+    <div>
+        <a href="/add">Add Post</a>
+        <a href="/logout">Logout</a>
+    </div>
+</div>
+
+<div class="container">
+    {% for post in posts %}
+    <div class="post">
+        <h2>{{ post.title }}</h2>
+        <a class="btn" href="/edit/{{ post.id }}">Edit</a>
+        <a class="btn btn-danger" href="/delete/{{ post.id }}">Delete</a>
+    </div>
+    {% endfor %}
+</div>
+
+</body>
+</html>

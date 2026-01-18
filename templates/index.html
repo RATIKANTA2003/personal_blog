@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Personal Blog</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="navbar">
+    <h2>Personal Blog</h2>
+    <a href="/login">Admin Login</a>
+</div>
+
+<div class="container">
+    {% if posts %}
+        {% for post in posts %}
+        <div class="post">
+            <h2>{{ post.title }}</h2>
+            <small>{{ post.date.strftime('%d %b %Y') }}</small>
+            <p>{{ post.content }}</p>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="center">No blog posts yet.</p>
+    {% endif %}
+</div>
+
+</body>
+</html>

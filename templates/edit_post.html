@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Post</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <h2>Edit Blog Post</h2>
+    <form method="post">
+        <input type="text" name="title" value="{{ post.title }}" required>
+        <textarea name="content" rows="6" required>{{ post.content }}</textarea>
+        <button type="submit">Update</button>
+        <a class="btn btn-secondary" href="/dashboard">Back</a>
+    </form>
+</div>
+
+</body>
+</html>
