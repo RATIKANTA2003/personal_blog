@@ -1,29 +1,351 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Personal Blog</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Blog | Insightful Stories</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --primary-hover: #4338ca;
+            --secondary: #64748b;
+            --dark: #0f172a;
+            --light-bg: #f8fafc;
+            --white: #ffffff;
+            --accent: #e0e7ff;
+            --success: #10b981;
+            --danger: #ef4444;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            --nav-bg: rgba(255, 255, 255, 0.85);
+            --border-color: rgba(226, 232, 240, 0.8);
+        }
+
+        [data-theme="dark"] {
+            --light-bg: #020617;
+            --white: #0f172a;
+            --dark: #f8fafc;
+            --secondary: #94a3b8;
+            --accent: #1e1b4b;
+            --nav-bg: rgba(15, 23, 42, 0.85);
+            --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            --border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; scroll-behavior: smooth; }
+
+        body { 
+            background-color: var(--light-bg); 
+            color: var(--dark); 
+            line-height: 1.7; 
+            transition: background 0.4s ease; 
+            overflow-x: hidden;
+        }
+
+        /* --- Scrollbar --- */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--light-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+        /* --- Progress Bar --- */
+        .progress-container { position: fixed; top: 0; z-index: 3000; width: 100%; height: 4px; background: transparent; }
+        .progress-bar { height: 100%; background: var(--primary-gradient); width: 0%; transition: width 0.1s; }
+
+        /* --- Flash Messages --- */
+        .flash-wrapper { position: fixed; top: 90px; right: 20px; z-index: 3000; }
+        .flash-alert {
+            background: var(--white); padding: 16px 24px; border-radius: 12px; margin-bottom: 10px; 
+            box-shadow: var(--card-shadow); display: flex; align-items: center; gap: 12px; 
+            border-left: 4px solid var(--primary); animation: slideIn 0.4s ease forwards;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .flash-exit { transform: translateX(120%); opacity: 0; transition: 0.4s; }
+
+        /* --- Navbar --- */
+        .navbar { 
+            background: var(--nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 0.8rem 10%; display: flex; justify-content: space-between; align-items: center; 
+            position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid var(--border-color); 
+        }
+        .logo { font-weight: 800; font-size: 1.6rem; color: var(--dark); text-decoration: none; letter-spacing: -1px; display: flex; align-items: center; gap: 8px; }
+        .logo i { color: var(--primary); }
+        .nav-right { display: flex; align-items: center; gap: 20px; }
+        .theme-toggle { cursor: pointer; font-size: 1.2rem; color: var(--secondary); transition: 0.3s; }
+        .theme-toggle:hover { color: var(--primary); }
+
+        /* --- Hero --- */
+        .hero { padding: 100px 10% 60px; text-align: center; position: relative; }
+        .hero h1 { font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 800; margin-bottom: 20px; letter-spacing: -2px; line-height: 1.1; }
+        .hero h1 span { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { color: var(--secondary); font-size: 1.2rem; max-width: 600px; margin: 0 auto 35px; }
+
+        .shape { position: absolute; filter: blur(80px); z-index: -1; opacity: 0.3; border-radius: 50%; }
+        .shape-1 { width: 300px; height: 300px; background: var(--primary); top: -50px; right: 5%; }
+        .shape-2 { width: 200px; height: 200px; background: #a855f7; bottom: 0; left: 5%; }
+
+        /* --- Search & Categories --- */
+        .search-container { max-width: 550px; margin: 0 auto 50px; position: relative; }
+        .search-container input { 
+            width: 100%; padding: 16px 25px 16px 55px; border-radius: 100px; border: 1px solid var(--border-color);
+            background: var(--white); box-shadow: var(--card-shadow); outline: none; font-size: 1rem; color: var(--dark);
+        }
+        .search-container i { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); color: var(--secondary); }
+
+        .categories-nav { display: flex; gap: 12px; overflow-x: auto; padding: 10px 10%; margin-bottom: 40px; scrollbar-width: none; }
+        .cat-pill { padding: 8px 22px; background: var(--white); border-radius: 50px; text-decoration: none; color: var(--secondary); font-weight: 600; font-size: 0.9rem; border: 1px solid var(--border-color); transition: 0.3s; white-space: nowrap; }
+        .cat-pill.active, .cat-pill:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* --- Posts --- */
+        .container { max-width: 1250px; margin: 0 auto 80px; padding: 0 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; }
+        .post-card { background: var(--white); border-radius: 24px; overflow: hidden; transition: 0.4s ease; border: 1px solid var(--border-color); display: flex; flex-direction: column; box-shadow: var(--card-shadow); }
+        .post-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .post-image { height: 220px; position: relative; overflow: hidden; }
+        .post-image img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+        .post-card:hover .post-image img { scale: 1.05; }
+        .tag { position: absolute; top: 15px; left: 15px; background: var(--primary); color: white; padding: 4px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+        .post-inner { padding: 25px; flex-grow: 1; display: flex; flex-direction: column; }
+        .post-inner h2 { font-size: 1.4rem; margin-bottom: 12px; line-height: 1.3; font-weight: 800; }
+        .read-link { margin-top: auto; color: var(--primary); text-decoration: none; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+
+        /* --- About Section --- */
+        .about-preview { padding: 80px 10%; background: var(--white); border-radius: 40px; margin: 40px 20px; border: 1px solid var(--border-color); transition: background 0.4s; }
+        .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+
+        /* --- Footer Section --- */
+        .footer { background: var(--white); border-top: 1px solid var(--border-color); padding: 80px 10% 40px; margin-top: 50px; }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 40px; margin-bottom: 50px; }
+        .footer-col h4 { font-size: 1.1rem; font-weight: 800; margin-bottom: 25px; position: relative; }
+        .footer-col h4::after { content: ''; position: absolute; left: 0; bottom: -8px; width: 30px; height: 3px; background: var(--primary); border-radius: 10px; }
+        .footer-col p { color: var(--secondary); font-size: 0.95rem; margin-bottom: 20px; }
+        .footer-col ul { list-style: none; }
+        .footer-col ul li { margin-bottom: 12px; }
+        .footer-col ul li a { text-decoration: none; color: var(--secondary); transition: 0.3s; font-size: 0.95rem; }
+        .footer-col ul li a:hover { color: var(--primary); padding-left: 5px; }
+        .social-links { display: flex; gap: 15px; }
+        .social-links a { width: 40px; height: 40px; background: var(--accent); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.3s; text-decoration: none; }
+        .social-links a:hover { background: var(--primary); color: white; transform: translateY(-3px); }
+        .footer-bottom { text-align: center; padding-top: 30px; border-top: 1px solid var(--border-color); color: var(--secondary); font-size: 0.9rem; }
+
+        /* --- Newsletter --- */
+        .newsletter-footer { background: var(--accent); padding: 25px; border-radius: 20px; }
+        .newsletter-footer input { width: 100%; padding: 12px 15px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 10px; outline: none; background: var(--white); color: var(--dark); }
+        .newsletter-footer button { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .newsletter-footer button:hover { background: var(--primary-hover); }
+
+        @media (max-width: 992px) { 
+            .footer-grid, .about-grid { grid-template-columns: 1fr; } 
+            .about-preview { margin: 20px 10px; padding: 40px 5%; }
+        }
+        @media (max-width: 600px) { .container { grid-template-columns: 1fr; } }
+    </style>
 </head>
-<body>
+<body data-theme="light">
 
-<div class="navbar">
-    <h2>Personal Blog</h2>
-    <a href="/login">Admin Login</a>
-</div>
+    <div class="progress-container"><div class="progress-bar" id="myBar"></div></div>
 
-<div class="container">
-    {% if posts %}
-        {% for post in posts %}
-        <div class="post">
-            <h2>{{ post.title }}</h2>
-            <small>{{ post.date.strftime('%d %b %Y') }}</small>
-            <p>{{ post.content }}</p>
+    <div class="flash-wrapper">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-alert alert-{{ category }}">
+                        <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}" 
+                           style="color: {{ 'var(--success)' if category == 'success' else 'var(--danger)' }};"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <nav class="navbar">
+        <a href="/" class="logo"><i class="fas fa-feather-pointed"></i> Insight<span>Blog</span></a>
+        <div class="nav-right">
+            <div class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon"></i></div>
+            {% if current_user.is_authenticated %}
+                <div class="profile-dropdown" style="position: relative;">
+                    <div onclick="toggleUserDropdown()" style="display: flex; align-items: center; cursor: pointer; gap: 8px;">
+                        <img src="{{ url_for('static', filename='profile_pics/' + current_user.profile_pic) }}" style="width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--primary); object-fit: cover;">
+                        <i class="fas fa-chevron-down" style="font-size: 0.7rem;"></i>
+                    </div>
+                    <div id="userDropdown" style="display: none; position: absolute; right: 0; top: 50px; background: var(--white); min-width: 160px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); overflow: hidden; z-index: 1001;">
+                        <a href="{{ url_for('profile') }}" style="display: block; padding: 12px 20px; text-decoration: none; color: var(--dark);">Profile</a>
+                        <a href="{{ url_for('logout') }}" style="display: block; padding: 12px 20px; text-decoration: none; color: var(--danger); background: rgba(239,68,68,0.05);">Logout</a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{{ url_for('login') }}" style="text-decoration: none; font-weight: 700; color: var(--dark); font-size: 0.9rem;">Login</a>
+                <a href="{{ url_for('register') }}" style="background: var(--primary); color: white; padding: 8px 20px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 0.9rem;">Join</a>
+            {% endif %}
         </div>
-        {% endfor %}
-    {% else %}
-        <p class="center">No blog posts yet.</p>
-    {% endif %}
-</div>
+    </nav>
 
+    <header class="hero">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <h1 data-aos="fade-up">Modern Stories for <span>Creative Minds.</span></h1>
+        <p data-aos="fade-up" data-aos-delay="100">Deep dives into technology, lifestyle, and the future of digital culture.</p>
+        
+        <div class="search-container" data-aos="fade-up" data-aos-delay="200">
+            <i class="fas fa-search"></i>
+            <input type="text" id="mainSearch" placeholder="Search articles...">
+        </div>
+    </header>
+
+    <div class="categories-nav">
+        <a href="/" class="cat-pill active">Everything</a>
+        {% for cat in all_categories %}
+            <a href="{{ url_for('index', category=cat) }}" class="cat-pill">{{ cat }}</a>
+        {% endfor %}
+    </div>
+
+    <main class="container">
+        {% if posts %}
+            {% for post in posts %}
+            <article class="post-card" data-aos="fade-up">
+                <div class="post-image">
+                    <span class="tag">{{ post.category }}</span>
+                    <img src="{{ url_for('static', filename='post_pics/' + (post.image_file or 'default.jpg')) }}">
+                </div>
+                <div class="post-inner">
+                    <span style="font-size: 0.8rem; color: var(--secondary); margin-bottom: 8px;"><i class="far fa-clock"></i> {{ post.date.strftime('%B %d') }}</span>
+                    <h2>{{ post.title }}</h2>
+                    <p style="color: var(--secondary); font-size: 0.95rem; margin-bottom: 20px;">{{ post.content[:110] | striptags }}...</p>
+                    <a href="{{ url_for('post', id=post.id) }}" class="read-link">Read Story <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </article>
+            {% endfor %}
+        {% else %}
+            <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+                <h2>No articles found.</h2>
+            </div>
+        {% endif %}
+    </main>
+
+    <section class="about-preview" data-aos="fade-up">
+        <div class="about-grid">
+            <div>
+                <h4 style="color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; margin-bottom: 15px;">Our Mission</h4>
+                <h2 style="font-size: 2.5rem; line-height: 1.1; margin-bottom: 25px; font-weight: 800;">We craft stories for the <span>curious mind.</span></h2>
+                <p style="color: var(--secondary); font-size: 1.1rem; margin-bottom: 30px;">InsightBlog started as a small digital diary and has grown into a hub for tech enthusiasts, cultural critics, and creative explorers.</p>
+                <a href="#" class="read-link" style="font-size: 1.1rem;">Our Full Journey <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div style="position: relative;">
+                <div style="width: 100%; height: 350px; background: var(--primary-gradient); border-radius: 30px; transform: rotate(-3deg); position: absolute; z-index: 1; opacity: 0.15;"></div>
+                <img src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=800" 
+                     style="width: 100%; height: 350px; object-fit: cover; border-radius: 30px; position: relative; z-index: 2; box-shadow: var(--card-shadow);">
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <a href="/" class="logo" style="margin-bottom: 20px;"><i class="fas fa-feather-pointed"></i> Insight<span>Blog</span></a>
+                <p>Delivering high-quality insights on modern technology and creative workflows to help you stay ahead.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#">About Insight</a></li>
+                    <li><a href="#">Our Authors</a></li>
+                    <li><a href="#">Trending Topics</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#">Advertise</a></li>
+                    <li><a href="#">RSS Feed</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Weekly Digest</h4>
+                <div class="newsletter-footer">
+                    <p style="color: var(--dark); font-weight: 700; margin-bottom: 10px;">Get the best stories</p>
+                    <input type="email" placeholder="email@example.com">
+                    <button>Subscribe</button>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 InsightBlog. Designed with ❤️ for the curious mind.</p>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Set theme immediately to avoid white flash
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
+        document.getElementById('theme-icon').className = savedTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+
+        AOS.init({ duration: 800, once: true });
+
+        // Flash Message Auto-hide
+        document.addEventListener("DOMContentLoaded", () => {
+            const alerts = document.querySelectorAll('.flash-alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.classList.add('flash-exit');
+                    setTimeout(() => alert.remove(), 400);
+                }, 4000);
+            });
+        });
+
+        // Scroll Progress
+        window.onscroll = () => {
+            let winScroll = document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById("myBar").style.width = (winScroll / height) * 100 + "%";
+        };
+
+        // Theme Toggle
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById("theme-icon");
+            const currentTheme = body.getAttribute("data-theme");
+            const newTheme = currentTheme === "light" ? "dark" : "light";
+            
+            body.setAttribute("data-theme", newTheme);
+            icon.className = newTheme === "light" ? "fas fa-moon" : "fas fa-sun";
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Live Search
+        document.getElementById('mainSearch').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('.post-card').forEach(card => {
+                const title = card.querySelector('h2').innerText.toLowerCase();
+                const content = card.querySelector('p').innerText.toLowerCase();
+                card.style.display = (title.includes(term) || content.includes(term)) ? 'flex' : 'none';
+            });
+        });
+
+        function toggleUserDropdown() {
+            const d = document.getElementById("userDropdown");
+            d.style.display = d.style.display === "none" ? "block" : "none";
+        }
+
+        window.onclick = (e) => {
+            if (!e.target.closest('.profile-dropdown')) {
+                const d = document.getElementById("userDropdown");
+                if(d) d.style.display = "none";
+            }
+        }
+    </script>
 </body>
 </html>

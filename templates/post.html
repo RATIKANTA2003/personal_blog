@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ post.title }} | My Blog</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --dark: #0f172a;
+            --secondary: #64748b;
+            --white: #ffffff;
+            --bg: #f8fafc;
+            --accent: #dbeafe;
+            --google-red: #ea4335;
+            --fb-blue: #1877f2;
+            --nav-bg: rgba(255, 255, 255, 0.85);
+            --card-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        [data-theme="dark"] {
+            --bg: #020617;
+            --white: #1e293b;
+            --dark: #f8fafc;
+            --secondary: #94a3b8;
+            --accent: #1e3a8a;
+            --nav-bg: rgba(15, 23, 42, 0.9);
+            --card-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: var(--white); color: var(--dark); line-height: 1.8; transition: background 0.3s ease; }
+
+        /* Flash Messages */
+        .flash-container {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .flash-message {
+            background: var(--white);
+            color: var(--dark);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            animation: slideIn 0.3s ease-out;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Navbar */
+        .navbar {
+            padding: 0.8rem 10%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.2);
+            position: sticky;
+            top: 0;
+            background: var(--nav-bg);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+        }
+        .logo { font-weight: 800; font-size: 1.5rem; color: var(--dark); text-decoration: none; }
+        .logo span { color: var(--primary); }
+        .nav-right { display: flex; align-items: center; gap: 15px; }
+
+        /* Dropdowns */
+        .profile-dropdown { position: relative; display: inline-block; }
+        .profile-trigger {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 5px 12px;
+            border-radius: 50px;
+            transition: 0.3s;
+            border: 1px solid rgba(226, 232, 240, 0.5);
+            background: var(--white);
+        }
+        .profile-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 50px;
+            background-color: var(--white);
+            min-width: 220px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(226, 232, 240, 0.1);
+        }
+        .dropdown-content a { color: var(--dark); padding: 12px 16px; text-decoration: none; display: block; font-size: 0.9rem; font-weight: 600; }
+        .dropdown-content a:hover { background-color: var(--primary); color: white; }
+        .show { display: block !important; }
+
+        /* Article Styles */
+        .article-container { max-width: 800px; margin: 60px auto; padding: 0 20px; }
+        .category-badge { display: inline-block; background: var(--accent); color: var(--primary); padding: 6px 16px; border-radius: 50px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-bottom: 20px; text-decoration: none; }
+        h1 { font-size: 3.5rem; line-height: 1.1; margin-bottom: 30px; letter-spacing: -2px; font-weight: 800; }
+        .featured-image { width: 100%; border-radius: 24px; margin-bottom: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
+        .content { font-size: 1.25rem; color: var(--dark); opacity: 0.9; margin-bottom: 60px; }
+
+        /* Reactions */
+        .reaction-container { display: flex; gap: 15px; margin-bottom: 40px; }
+        .reaction-btn { background: var(--bg); border: 1px solid rgba(226, 232, 240, 0.5); padding: 10px 20px; border-radius: 50px; color: var(--dark); font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .reaction-btn:hover { background: var(--accent); color: var(--primary); }
+
+        /* Comments */
+        .comment-section { margin-top: 60px; }
+        .comment-form { margin-bottom: 40px; background: var(--bg); padding: 25px; border-radius: 20px; }
+        .comment-textarea { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid rgba(226, 232, 240, 0.8); background: var(--white); color: var(--dark); min-height: 100px; margin-bottom: 15px; }
+        .comment-card { padding: 20px; background: var(--white); border-radius: 18px; margin-bottom: 20px; border: 1px solid rgba(226, 232, 240, 0.3); box-shadow: var(--card-shadow); }
+        .comment-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .comment-author-img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+
+        footer { margin-top: 80px; padding: 40px 0; border-top: 1px solid rgba(226, 232, 240, 0.2); text-align: center; color: var(--secondary); font-size: 0.8rem; }
+    </style>
+</head>
+<body data-theme="light">
+
+<div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-message">
+            <i class="fas fa-check-circle" style="color: #10b981;"></i>
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+</div>
+
+<nav class="navbar">
+    <a href="/" class="logo">My<span>Blog</span></a>
+    <div class="nav-right">
+        <div class="profile-dropdown">
+            <div class="profile-trigger" onclick="toggleCatDropdown()">
+                <span style="font-weight: 600; font-size: 0.9rem;">Categories</span>
+                <i class="fas fa-chevron-down" style="font-size: 0.7rem; color: var(--secondary);"></i>
+            </div>
+            <div id="catDropdown" class="dropdown-content">
+                <a href="/">All Posts</a>
+                {% for cat in all_categories %}
+                    <a href="{{ url_for('index', category=cat) }}">{{ cat }}</a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="theme-toggle" onclick="toggleTheme()">
+            <i class="fas fa-moon" id="theme-icon"></i>
+        </div>
+
+        {% if current_user.is_authenticated %}
+        <div class="profile-dropdown">
+            <div class="profile-trigger" onclick="toggleUserDropdown()">
+                <img src="{{ url_for('static', filename='profile_pics/' + current_user.profile_pic) }}" class="profile-img">
+                <i class="fas fa-chevron-down" style="font-size: 0.7rem; color: var(--secondary);"></i>
+            </div>
+            <div id="userDropdown" class="dropdown-content">
+                <a href="/profile"><i class="fas fa-user-circle"></i> Profile</a>
+                {% if current_user.username == 'admin' %}
+                    <a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+                {% endif %}
+                <hr style="opacity: 0.1;">
+                <a href="/logout" style="color: var(--google-red);"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        {% else %}
+        <a href="/login" style="text-decoration: none; color: var(--secondary); font-weight: 600; font-size: 0.9rem;">Login</a>
+        <a href="/register" style="text-decoration: none; background: var(--primary); color: white; padding: 8px 20px; border-radius: 50px; font-weight: 700; font-size: 0.9rem;">Sign Up</a>
+        {% endif %}
+    </div>
+</nav>
+
+<article class="article-container">
+    <a href="{{ url_for('index', category=post.category) }}" class="category-badge">{{ post.category }}</a>
+    <span class="meta">Published on {{ post.date.strftime('%d %B %Y') }} &bull; <i class="far fa-clock"></i> {{ read_time }} min read</span>
+    
+    <h1>{{ post.title }}</h1>
+
+    {% if post.image_file %}
+    <img src="{{ url_for('static', filename='post_pics/' + post.image_file) }}" class="featured-image" alt="{{ post.title }}">
+    {% endif %}
+
+    <div class="content">
+        {{ post.content | markdown }}
+    </div>
+
+    <div class="reaction-container">
+        <form action="{{ url_for('like_post', post_id=post.id) }}" method="POST">
+            <button type="submit" class="reaction-btn"><i class="far fa-thumbs-up"></i> {{ post.likes }}</button>
+        </form>
+        <form action="{{ url_for('dislike_post', post_id=post.id) }}" method="POST">
+            <button type="submit" class="reaction-btn"><i class="far fa-thumbs-down"></i> {{ post.dislikes }}</button>
+        </form>
+    </div>
+
+    <div class="comment-section">
+        <h2 style="font-weight: 800; margin-bottom: 25px;">Comments ({{ post.comments|length }})</h2>
+        {% if current_user.is_authenticated %}
+        <div class="comment-form">
+            <form action="{{ url_for('add_comment', post_id=post.id) }}" method="POST">
+                <textarea name="content" class="comment-textarea" placeholder="What are your thoughts?" required></textarea>
+                <button type="submit" class="btn-signup-large" style="width: auto; padding: 10px 30px;">Post Comment</button>
+            </form>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 20px; background: var(--bg); border-radius: 20px;">
+            <a href="/login" class="btn-signup-large" style="display:inline-block;">Login to Comment</a>
+        </div>
+        {% endif %}
+
+        <div class="comments-list">
+            {% for comment in post.comments|sort(attribute='date_posted', reverse=True) %}
+            <div class="comment-card">
+                <div class="comment-meta">
+                    <img src="{{ url_for('static', filename='profile_pics/' + comment.author.profile_pic) }}" class="comment-author-img">
+                    <div>
+                        <div style="font-weight: 800; font-size: 0.95rem;">{{ comment.author.username }}</div>
+                        <div style="font-size: 0.75rem; color: var(--secondary);">{{ comment.date_posted.strftime('%d %b, %Y') }}</div>
+                    </div>
+                </div>
+                <p>{{ comment.content }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</article>
+
+<footer>
+    <p>&copy; 2026 MyBlog. Crafted with ❤️ and Flask.</p>
+</footer>
+
+<script>
+    // AUTO-HIDE FLASH MESSAGES
+    document.addEventListener("DOMContentLoaded", function() {
+        const flashes = document.querySelectorAll('.flash-message');
+        flashes.forEach(msg => {
+            setTimeout(() => {
+                msg.style.opacity = '0';
+                msg.style.transform = 'translateX(20px)';
+                setTimeout(() => msg.remove(), 500);
+            }, 4000); // Disappears after 4 seconds
+        });
+    });
+
+    // Toggle Dropdowns
+    function toggleUserDropdown() { closeAll(); document.getElementById("userDropdown").classList.toggle("show"); }
+    function toggleCatDropdown() { closeAll(); document.getElementById("catDropdown").classList.toggle("show"); }
+    function closeAll() { document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show')); }
+
+    // Theme Toggle
+    function toggleTheme() {
+        const body = document.body;
+        const icon = document.getElementById("theme-icon");
+        const theme = body.getAttribute("data-theme") === "light" ? "dark" : "light";
+        body.setAttribute("data-theme", theme);
+        icon.classList.toggle("fa-moon", theme === "light");
+        icon.classList.toggle("fa-sun", theme === "dark");
+    }
+
+    window.onclick = function(e) { if (!e.target.closest('.profile-dropdown')) closeAll(); }
+</script>
+
+</body>
+</html>

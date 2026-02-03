@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings | My Blog</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px; 
+        }
+
+        /* Flash Messages */
+        .alert {
+            width: 100%;
+            max-width: 500px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: white;
+            font-weight: 500;
+            text-align: center;
+            animation: slideDown 0.4s ease;
+        }
+        .alert-success { background: var(--success); }
+        .alert-danger { background: var(--danger); }
+
+        .profile-card { 
+            background: var(--white); 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+            width: 100%; 
+            max-width: 500px; 
+        }
+
+        .user-header { text-align: center; margin-bottom: 30px; }
+        
+        .image-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .user-header img { 
+            width: 120px; 
+            height: 120px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            border: 4px solid var(--white);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .user-header h2 { margin: 10px 0 5px; color: var(--text-main); }
+        .user-header p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
+
+        .form-group { margin-bottom: 20px; }
+        
+        label { 
+            display: block; 
+            font-weight: 600; 
+            margin-bottom: 8px; 
+            color: var(--text-main); 
+            font-size: 0.9rem;
+        }
+
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 10px; 
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+
+        .btn-save { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 14px; 
+            width: 100%; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: 700; 
+            font-size: 1rem;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .btn-save:hover { 
+            background: var(--primary-hover); 
+            transform: translateY(-1px);
+        }
+
+        .btn-save:active { transform: translateY(0); }
+
+        .navigation-links {
+            margin-top: 25px;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .navigation-links a { 
+            text-decoration: none; 
+            color: var(--text-muted); 
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .navigation-links a:hover { color: var(--primary); }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="profile-card">
+        <div class="user-header">
+            <div class="image-container">
+                <img src="{{ url_for('static', filename='profile_pics/' + current_user.profile_pic) }}" alt="Profile Picture">
+            </div>
+            <h2>{{ current_user.username }}</h2>
+            <p>Update your personal information</p>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label><i class="fas fa-camera"></i> Profile Photo</label>
+                <input type="file" name="profile_img" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-envelope"></i> Gmail Address</label>
+                <input type="email" name="email" value="{{ current_user.email or '' }}" placeholder="yourname@gmail.com">
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-phone"></i> Mobile Number</label>
+                <input type="text" name="mobile" value="{{ current_user.mobile or '' }}" placeholder="+91 98765 43210">
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-language"></i> Preferred Language</label>
+                <select name="language">
+                    <option value="English" {% if current_user.language == 'English' %}selected{% endif %}>English</option>
+                    <option value="Hindi" {% if current_user.language == 'Hindi' %}selected{% endif %}>Hindi</option>
+                    <option value="Spanish" {% if current_user.language == 'Spanish' %}selected{% endif %}>Spanish</option>
+                    <option value="French" {% if current_user.language == 'French' %}selected{% endif %}>French</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-save">Save Changes</button>
+        </form>
+        
+        <div class="navigation-links">
+            <a href="/"><i class="fas fa-home"></i> Home</a>
+            <a href="/dashboard"><i class="fas fa-columns"></i> Dashboard</a>
+        </div>
+    </div>
+
+</body>
+</html>

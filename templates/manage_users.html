@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users | Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --danger: #ef4444;
+            --light-bg: #f8fafc;
+            --white: #ffffff;
+            --secondary: #64748b;
+            --dark: #0f172a;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark);
+            margin: 0;
+            padding: 40px 10%;
+        }
+
+        .header-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .btn-back {
+            text-decoration: none;
+            color: var(--secondary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+        .btn-back:hover { color: var(--primary); }
+
+        .user-card {
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        thead {
+            background: #f1f5f9;
+            color: var(--secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        th, td {
+            padding: 18px 25px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+
+        .username {
+            font-weight: 700;
+            display: block;
+        }
+
+        .user-email {
+            font-size: 0.85rem;
+            color: var(--secondary);
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .delete-btn {
+            background: #fee2e2;
+            color: var(--danger);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: var(--secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { padding: 20px 5%; }
+            .hide-mobile { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-area">
+        <div>
+            <a href="/dashboard" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+            <h1 style="margin-top: 10px;">Community Management</h1>
+        </div>
+        <div style="text-align: right;">
+            <span style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">{{ users|length }}</span>
+            <p style="color: var(--secondary); font-size: 0.8rem; margin: 0;">Total Members</p>
+        </div>
+    </div>
+
+    <div class="user-card">
+        {% if users %}
+        <table>
+            <thead>
+                <tr>
+                    <th>User Details</th>
+                    <th class="hide-mobile">Language</th>
+                    <th class="hide-mobile">Joined Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="user-info">
+                            <img src="{{ url_for('static', filename='profile_pics/' + user.profile_pic) }}" alt="Profile">
+                            <div>
+                                <span class="username">{{ user.username }}</span>
+                                <span class="user-email">{{ user.email or 'No email provided' }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="hide-mobile">
+                        <span class="badge">{{ user.language }}</span>
+                    </td>
+                    <td class="hide-mobile" style="color: var(--secondary); font-size: 0.9rem;">
+                        {{ user.date_joined.strftime('%d %b, %Y') }}
+                    </td>
+                    <td>
+                        <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" onsubmit="return confirm('Are you sure? This will permanently delete the user account.');">
+                            <button type="submit" class="delete-btn">
+                                <i class="fas fa-user-minus"></i> <span class="hide-mobile">Remove</span>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-users-slash fa-3x" style="margin-bottom: 15px; opacity: 0.3;"></i>
+            <p>No registered users found yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>

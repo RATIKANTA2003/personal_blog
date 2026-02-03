@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | MyBlog</title>
+    <title>Create Account | MyBlog</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -17,7 +17,6 @@
             --white: #ffffff;
             --card-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
             --danger: #ef4444;
-            --success: #166534;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -32,59 +31,78 @@
             padding: 20px;
         }
 
-        .login-card {
+        .auth-card {
             background: var(--white);
             padding: 40px;
             border-radius: 24px;
             box-shadow: var(--card-shadow);
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
             text-align: center;
         }
 
-        .login-card h2 {
+        .auth-header h2 {
             font-size: 2rem;
             font-weight: 800;
             margin-bottom: 10px;
             letter-spacing: -1px;
         }
 
-        .login-card p {
+        .auth-header p {
             color: var(--secondary);
             font-size: 0.9rem;
             margin-bottom: 30px;
         }
 
-        /* Alert Styling */
+        /* Alert Messages */
         .alert {
             padding: 12px;
-            margin-bottom: 20px;
             border-radius: 12px;
+            margin-bottom: 20px;
             font-size: 0.85rem;
             text-align: center;
         }
         .alert-danger { background: #fee2e2; color: var(--danger); border: 1px solid #fecaca; }
-        .alert-success { background: #dcfce7; color: var(--success); border: 1px solid #bbf7d0; }
-        .alert-info { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
 
-        form { display: flex; flex-direction: column; gap: 15px; }
+        form { display: flex; flex-direction: column; gap: 15px; text-align: left; }
 
-        input {
-            padding: 14px 20px;
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+
+        label { 
+            font-weight: 700; 
+            font-size: 0.85rem; 
+            color: var(--dark);
+            margin-left: 4px;
+        }
+
+        .input-group { position: relative; }
+        .input-group i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
             outline: none;
-            font-size: 1rem;
+            font-size: 0.95rem;
             transition: 0.3s;
             background: var(--white);
         }
 
-        input:focus { 
+        input:focus, select:focus { 
             border-color: var(--primary); 
             box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); 
         }
 
-        button {
+        .btn-register {
             background: var(--primary);
             color: white;
             border: none;
@@ -97,34 +115,32 @@
             margin-top: 10px;
         }
 
-        button:hover { 
+        .btn-register:hover { 
             background: var(--primary-hover); 
             transform: translateY(-2px); 
         }
 
-        /* Social Login Styling */
+        /* Social Registration */
         .divider {
             margin: 25px 0;
             display: flex;
             align-items: center;
             text-align: center;
             color: var(--secondary);
-            font-size: 0.8rem;
-            font-weight: 600;
+            font-size: 0.75rem;
+            font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-
         .divider::before, .divider::after {
             content: '';
             flex: 1;
             border-bottom: 1px solid #e2e8f0;
         }
-
-        .divider:not(:empty)::before { margin-right: .5em; }
-        .divider:not(:empty)::after { margin-left: .5em; }
+        .divider:not(:empty)::before { margin-right: 1em; }
+        .divider:not(:empty)::after { margin-left: 1em; }
 
         .social-group { display: flex; gap: 12px; }
-
         .social-btn {
             flex: 1;
             display: flex;
@@ -137,14 +153,13 @@
             text-decoration: none;
             color: var(--dark);
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             transition: 0.3s;
             background: var(--white);
         }
-
         .social-btn:hover { 
             background: #f8fafc; 
-            border-color: var(--primary);
+            border-color: var(--primary); 
             color: var(--primary);
         }
 
@@ -153,7 +168,6 @@
             font-size: 0.9rem;
             color: var(--secondary);
         }
-
         .footer-link a {
             color: var(--primary);
             text-decoration: none;
@@ -163,41 +177,76 @@
 </head>
 <body>
 
-    <div class="login-card">
-        <h2>Welcome back</h2>
-        <p>Enter your details to access your account</p>
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2>Join MyBlog</h2>
+            <p>Create an account to join the conversation.</p>
+        </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
-              <div class="alert alert-{{ category }}">
-                {{ message }}
-              </div>
+              <div class="alert alert-{{ category }}">{{ message }}</div>
             {% endfor %}
           {% endif %}
         {% endwith %}
 
-        <form method="POST" action="{{ url_for('login') }}">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Sign In</button>
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="form-group">
+                <label>Username</label>
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" name="username" placeholder="Choose a username" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Email Address</label>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" name="email" placeholder="name@example.com" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" name="password" placeholder="Create a password" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Language</label>
+                <div class="input-group">
+                    <i class="fas fa-globe"></i>
+                    <select name="language">
+                        <option value="English">English</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Spanish">Spanish</option>
+                        <option value="French">French</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-register">Create Account</button>
         </form>
 
-        <div class="divider">OR CONTINUE WITH</div>
+        <div class="divider">Or register with</div>
 
         <div class="social-group">
             <a href="{{ url_for('google_login') }}" class="social-btn">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="18" alt="Google">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="16" alt="Google">
                 Google
             </a>
             <a href="{{ url_for('github_login') }}" class="social-btn">
                 <i class="fab fa-github"></i> GitHub
             </a>
         </div>
-
-        <p class="footer-link">
-            Don't have an account? <a href="{{ url_for('register') }}">Create one</a>
-        </p>
+        
+        <div class="footer-link">
+            Already have an account? <a href="{{ url_for('login') }}">Log in</a>
+        </div>
     </div>
 
 </body>

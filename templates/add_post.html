@@ -1,20 +1,214 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Add Post</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Post | Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --dark: #0f172a;
+            --bg: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main);
+            padding: 50px 20px; 
+            margin: 0;
+        }
+
+        .container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 24px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+        }
+
+        h2 { 
+            margin-bottom: 30px; 
+            letter-spacing: -1px; 
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2 i { color: var(--primary); }
+
+        .field-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
+            letter-spacing: 0.05em;
+        }
+        
+        input[type="text"], textarea, select {
+            width: 100%; 
+            padding: 15px; 
+            margin-bottom: 20px;
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            font-size: 1rem;
+            font-family: inherit;
+            box-sizing: border-box;
+            transition: all 0.2s;
+            background-color: white;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Image Upload Styling */
+        .file-input-group {
+            margin-bottom: 25px;
+            padding: 25px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            text-align: center;
+            background: #f1f5f9;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-group:hover {
+            background: #e2e8f0;
+            border-color: var(--primary);
+        }
+
+        #image-preview {
+            width: 100%; 
+            max-height: 350px; 
+            object-fit: cover;
+            border-radius: 12px; 
+            margin-bottom: 15px; 
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .upload-hint {
+            display: block;
+            font-size: 0.85rem; 
+            color: var(--text-muted); 
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        button {
+            background: var(--primary); 
+            color: white; 
+            border: none;
+            padding: 16px 35px; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button:active { transform: translateY(0); }
+
+        .btn-secondary { 
+            color: var(--text-muted); 
+            text-decoration: none; 
+            margin-left: 20px; 
+            font-size: 0.95rem; 
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .btn-secondary:hover { color: #ef4444; }
+    </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Add New Blog Post</h2>
-    <form method="post">
-        <input type="text" name="title" placeholder="Post Title" required>
-        <textarea name="content" rows="6" placeholder="Write your content..." required></textarea>
-        <button type="submit">Publish</button>
-        <a class="btn btn-secondary" href="/dashboard">Back</a>
+    <h2><i class="fas fa-plus-circle"></i> Create New Story</h2>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div style="padding: 15px; margin-bottom: 20px; border-radius: 12px; background: {% if category == 'danger' %}#fee2e2{% else %}#dcfce7{% endif %}; color: {% if category == 'danger' %}#991b1b{% else %}#166534{% endif %}; font-weight: 600;">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data">
+        <label class="field-label">Post Title</label>
+        <input type="text" name="title" placeholder="A compelling headline..." required>
+
+        <label class="field-label">Category</label>
+        <select name="category" required>
+            <option value="General">General</option>
+            <option value="Tech">Tech</option>
+            <option value="Culture">Culture</option>
+            <option value="Future">Future</option>
+            <option value="Personal">Personal</option>
+        </select>
+        
+        <div class="file-input-group">
+            <img id="image-preview" src="#" alt="Preview">
+            <label for="image-upload" class="upload-hint">
+                <i class="fas fa-image" style="font-size: 1.5rem; display: block; margin-bottom: 8px; color: var(--primary);"></i>
+                Click to upload a cover photo
+            </label>
+            <input type="file" name="image" id="image-upload" accept="image/*" style="font-size: 0.8rem;">
+        </div>
+
+        <label class="field-label">Content</label>
+        <textarea name="content" rows="12" placeholder="Start typing your story here..." required></textarea>
+        
+        <div class="button-group">
+            <button type="submit">Publish to Blog</button>
+            <a class="btn-secondary" href="{{ url_for('dashboard') }}">Discard Post</a>
+        </div>
     </form>
 </div>
+
+<script>
+    const imageUpload = document.getElementById('image-upload');
+    const imagePreview = document.getElementById('image-preview');
+
+    imageUpload.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
 
 </body>
 </html>
