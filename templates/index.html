@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Personal Blog | Insightful Stories</title>
     
+    <meta name="google-site-verification" content="woSr02QA1NKpUSJCToqWDHnlhNo_TwRm_DroknpX3jw" />
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
@@ -169,7 +171,8 @@
             {% if current_user.is_authenticated %}
                 <div class="profile-dropdown" style="position: relative;">
                     <div onclick="toggleUserDropdown()" style="display: flex; align-items: center; cursor: pointer; gap: 8px;">
-                        <img src="{{ url_for('static', filename='profile_pics/' + current_user.profile_pic) }}" style="width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--primary); object-fit: cover;">
+                        <img src="{{ current_user.profile_pic if 'http' in current_user.profile_pic else url_for('static', filename='profile_pics/' + current_user.profile_pic) }}" 
+                             style="width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--primary); object-fit: cover;">
                         <i class="fas fa-chevron-down" style="font-size: 0.7rem;"></i>
                     </div>
                     <div id="userDropdown" style="display: none; position: absolute; right: 0; top: 50px; background: var(--white); min-width: 160px; border-radius: 12px; box-shadow: var(--card-shadow); border: 1px solid var(--border-color); overflow: hidden; z-index: 1001;">
