@@ -11,8 +11,9 @@ from werkzeug.utils import secure_filename
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "secret123"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
+# Secure: Use environment variable for secret key on Railway
+app.secret_key = os.environ.get("SECRET_KEY", "secret123")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///database.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False 
 
 # --- Folder Configurations ---
@@ -26,23 +27,13 @@ os.makedirs(PROFILE_FOLDER, exist_ok=True)
 
 db = SQLAlchemy(app)
 
-# --- OAuth Configuration ---
+# --- OAuth Configuration (Only Google remains) ---
 oauth = OAuth(app)
-
-github = oauth.register(
-    name='github',
-    client_id='Ov23liPcFAtKEzv2TwhN',
-    client_secret='dc8eaeec1518c04f5b67380b16f47f40e8dfb3b7',
-    access_token_url='https://github.com/login/oauth/access_token',
-    authorize_url='https://github.com/login/oauth/authorize',
-    api_base_url='https://api.github.com/',
-    client_kwargs={'scope': 'user:email'},
-)
 
 google = oauth.register(
     name='google',
-    client_id='PASTE_YOUR_GOOGLE_CLIENT_ID_HERE',
-    client_secret='PASTE_YOUR_GOOGLE_CLIENT_SECRET_HERE',
+    client_id=os.environ.get('GOOGLE_CLIENT_ID', 'PASTE_YOUR_GOOGLE_CLIENT_ID_HERE'),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET', 'PASTE_YOUR_GOOGLE_CLIENT_SECRET_HERE'),
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'},
 )
@@ -69,7 +60,6 @@ class Post(db.Model):
     category = db.Column(db.String(50), nullable=False, default='General')
     image_file = db.Column(db.String(100), nullable=True)
     date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    # --- New Interaction Fields ---
     likes = db.Column(db.Integer, default=0)
     dislikes = db.Column(db.Integer, default=0)
     comments = db.relationship('Comment', backref='post', lazy=True, cascade="all, delete-orphan")
@@ -80,7 +70,6 @@ class Comment(db.Model):
     date_posted = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
-    # Relationship to user
     author = db.relationship('User', backref='user_comments', lazy=True)
 
 class Newsletter(db.Model):
@@ -108,38 +97,6 @@ def inject_categories():
     categories = db.session.query(Post.category).distinct().all()
     category_list = [c[0] for c in categories]
     return dict(all_categories=category_list)
-
-# --- GitHub Auth Routes ---
-@app.route('/login/github')
-def github_login():
-    redirect_uri = url_for('authorize_github', _external=True)
-    return github.authorize_redirect(redirect_uri)
-
-@app.route('/authorize/github')
-def authorize_github():
-    token = github.authorize_access_token()
-    resp = github.get('user')
-    user_info = resp.json()
-    
-    email = user_info.get('email')
-    if not email:
-        emails = github.get('user/emails').json()
-        email = next(e['email'] for e in emails if e['primary'])
-
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        user = User(
-            username=user_info['login'],
-            email=email,
-            password="github_oauth_managed",
-            profile_pic=user_info.get('avatar_url', 'default.jpg')
-        )
-        db.session.add(user)
-        db.session.commit()
-    
-    login_user(user)
-    flash(f"Logged in via GitHub as {user.username}", "success")
-    return redirect(url_for('index'))
 
 # --- Google Auth Routes ---
 @app.route('/login/google')
@@ -172,10 +129,7 @@ def authorize_google():
 @app.route("/")
 def index():
     cat = request.args.get('category')
-    if cat:
-        posts = Post.query.filter_by(category=cat).order_by(Post.date.desc()).all()
-    else:
-        posts = Post.query.order_by(Post.date.desc()).all()
+    posts = Post.query.filter_by(category=cat).order_by(Post.date.desc()).all() if cat else Post.query.order_by(Post.date.desc()).all()
     return render_template("index.html", posts=posts)
 
 @app.route("/post/<int:id>")
@@ -248,16 +202,11 @@ def register():
             flash("Email already registered.", "danger")
             return redirect(url_for('register'))
 
-        try:
-            new_user = User(username=username, email=email, password=password, language=language)
-            db.session.add(new_user)
-            db.session.commit()
-            flash("Account created! Please log in.", "success")
-            return redirect(url_for('login'))
-        except sqlalchemy.exc.IntegrityError:
-            db.session.rollback()
-            flash("An error occurred.", "danger")
-            return redirect(url_for('register'))
+        new_user = User(username=username, email=email, password=password, language=language)
+        db.session.add(new_user)
+        db.session.commit()
+        flash("Account created! Please log in.", "success")
+        return redirect(url_for('login'))
     return render_template("register.html")
 
 @app.route("/login", methods=["GET", "POST"])
@@ -269,11 +218,8 @@ def login():
         if user and user.password == request.form["password"]:
             login_user(user)
             flash(f"Welcome back, {user.username}!", "success")
-            if user.username == 'admin':
-                return redirect(url_for("dashboard"))
-            return redirect(url_for("index"))
-        else:
-            flash("Invalid credentials.", "danger")
+            return redirect(url_for("dashboard") if user.username == 'admin' else url_for("index"))
+        flash("Invalid credentials.", "danger")
     return render_template("login.html")
 
 @app.route("/logout")
@@ -289,22 +235,22 @@ def logout():
 def profile():
     if request.method == "POST":
         new_email = request.form.get("email")
-        if new_email != current_user.email:
-            if User.query.filter_by(email=new_email).first():
-                flash("That email is already taken.", "danger")
-                return redirect(url_for('profile'))
+        if new_email != current_user.email and User.query.filter_by(email=new_email).first():
+            flash("That email is already taken.", "danger")
+            return redirect(url_for('profile'))
+        
         file = request.files.get('profile_img')
         if file and file.filename != '':
             filename = secure_filename(file.filename)
             filename = f"user_{current_user.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
             file.save(os.path.join(app.config['PROFILE_FOLDER'], filename))
             current_user.profile_pic = filename
+            
         current_user.email = new_email
         current_user.mobile = request.form.get("mobile")
         current_user.language = request.form.get("language")
         db.session.commit()
         flash("Profile updated successfully!", "success")
-        return redirect(url_for('profile'))
     return render_template("profile.html")
 
 # --- Admin Routes ---
@@ -312,7 +258,6 @@ def profile():
 @login_required
 def dashboard():
     if current_user.username != 'admin':
-        flash("Unauthorized access.", "danger")
         return redirect(url_for('index'))
     search = request.args.get('search')
     posts = Post.query.filter(Post.title.contains(search)).order_by(Post.date.desc()).all() if search else Post.query.order_by(Post.date.desc()).all()
@@ -326,8 +271,7 @@ def add_post():
     if current_user.username != 'admin':
         return redirect(url_for('index'))
     if request.method == "POST":
-        title = request.form["title"]
-        content = request.form["content"]
+        title, content = request.form["title"], request.form["content"]
         category = request.form.get("category", "General")
         file = request.files.get('image')
         filename = None
@@ -349,8 +293,7 @@ def edit_post(id):
         return redirect(url_for('index'))
     post_item = Post.query.get_or_404(id)
     if request.method == "POST":
-        post_item.title = request.form["title"]
-        post_item.content = request.form["content"]
+        post_item.title, post_item.content = request.form["title"], request.form["content"]
         post_item.category = request.form.get("category", post_item.category)
         file = request.files.get('image')
         if file and file.filename != '':
@@ -374,6 +317,7 @@ def delete_post(id):
     flash("Post deleted.", "danger")
     return redirect(url_for("dashboard"))
 
+# --- RAILWAY STARTUP LOGIC ---
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
@@ -381,4 +325,7 @@ if __name__ == "__main__":
             admin_user = User(username="admin", password="admin", email="admin@gmail.com", language="English")
             db.session.add(admin_user)
             db.session.commit()
-    app.run(debug=True)
+    
+    # Railway assigns a port via the PORT environment variable
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
