@@ -10,9 +10,16 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+
+# --- Railway Environment Configurations ---
 # Secure: Use environment variable for secret key on Railway
 app.secret_key = os.environ.get("SECRET_KEY", "secret123")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///database.db")
+
+# Handle Railway's PostgreSQL URL format (if you switch to Postgres later)
+db_url = os.environ.get("DATABASE_URL", "sqlite:///database.db")
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False 
 
 # --- Folder Configurations ---
@@ -21,6 +28,7 @@ PROFILE_FOLDER = 'static/profile_pics'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['PROFILE_FOLDER'] = PROFILE_FOLDER
 
+# Ensure folders exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROFILE_FOLDER, exist_ok=True)
 
@@ -82,8 +90,11 @@ def render_markdown(text):
 
 @app.context_processor
 def inject_categories():
-    categories = db.session.query(Post.category).distinct().all()
-    category_list = [c[0] for c in categories]
+    try:
+        categories = db.session.query(Post.category).distinct().all()
+        category_list = [c[0] for c in categories]
+    except:
+        category_list = []
     return dict(all_categories=category_list)
 
 # --- Public Routes ---
@@ -278,10 +289,11 @@ def delete_post(id):
     flash("Post deleted.", "danger")
     return redirect(url_for("dashboard"))
 
-# --- RAILWAY STARTUP LOGIC ---
+# --- STARTUP LOGIC ---
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+        # Initial Admin Creation
         if not User.query.filter_by(username="admin").first():
             admin_user = User(username="admin", password="admin", email="admin@gmail.com", language="English")
             db.session.add(admin_user)
