@@ -8,7 +8,6 @@ from markupsafe import Markup
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.utils import secure_filename
-from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
 # Secure: Use environment variable for secret key on Railway
@@ -26,17 +25,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROFILE_FOLDER, exist_ok=True)
 
 db = SQLAlchemy(app)
-
-# --- OAuth Configuration (Only Google remains) ---
-oauth = OAuth(app)
-
-google = oauth.register(
-    name='google',
-    client_id=os.environ.get('GOOGLE_CLIENT_ID', 'PASTE_YOUR_GOOGLE_CLIENT_ID_HERE'),
-    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET', 'PASTE_YOUR_GOOGLE_CLIENT_SECRET_HERE'),
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={'scope': 'openid email profile'},
-)
 
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
@@ -97,33 +85,6 @@ def inject_categories():
     categories = db.session.query(Post.category).distinct().all()
     category_list = [c[0] for c in categories]
     return dict(all_categories=category_list)
-
-# --- Google Auth Routes ---
-@app.route('/login/google')
-def google_login():
-    redirect_uri = url_for('authorize_google', _external=True)
-    return google.authorize_redirect(redirect_uri)
-
-@app.route('/authorize/google')
-def authorize_google():
-    token = google.authorize_access_token()
-    user_info = token.get('userinfo')
-    if user_info:
-        email = user_info['email']
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            user = User(
-                username=user_info.get('name', user_info.get('given_name')),
-                email=email,
-                password="google_oauth_managed",
-                profile_pic=user_info.get('picture', 'default.jpg')
-            )
-            db.session.add(user)
-            db.session.commit()
-        
-        login_user(user)
-        flash(f"Logged in via Google as {user.username}", "success")
-    return redirect(url_for('index'))
 
 # --- Public Routes ---
 @app.route("/")
@@ -326,6 +287,5 @@ if __name__ == "__main__":
             db.session.add(admin_user)
             db.session.commit()
     
-    # Railway assigns a port via the PORT environment variable
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
